@@ -2,202 +2,664 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Couple Puzzle Game</title>
+  <title>For You 💝</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #ffe6ec;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    h1 {
-      color: #d6336c;
-      margin-top: 20px;
-    }
-
-    #puzzle-container {
-      margin: 20px;
-      width: 90vmin;
-      height: 90vmin;
-      max-width: 400px;
-      max-height: 400px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      border: 3px solid #d6336c;
-      background: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .tile {
-      width: 100%;
+    /* --------------- Global & Existing Styles --------------- */
+    html, body {
+      margin: 0; padding: 0;
       height: 100%;
-      background-size: 300% 300%;
-      background-image: url('us_puzzle.jpeg');
-      border-radius: 8px;
-      transition: 0.3s ease;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff0f5;
+      color: #444;
+      text-align: center;
+      padding: 60px 20px;
+      position: relative;
+      z-index: 0;
     }
+    /* Floating hearts */
+    .hearts-background { pointer-events:none; position:fixed; top:0; left:0; width:100vw; height:100vh; overflow:hidden; z-index:-1; background:#fff0f5; }
+    .heart { position:absolute; width:30px; height:30px; fill:#f9c0d8; opacity:.8; animation:floatUp linear infinite; }
+    .pink{fill:#f9c0d8} .purple{fill:#d6a4e0} .lightpink{fill:#ffd1dc} .lavender{fill:#cdb4db}
+    @keyframes floatUp{0%{transform:translateX(0) translateY(0);opacity:.8}50%{transform:translateX(15px) translateY(-50vh);opacity:.6}100%{transform:translateX(-15px) translateY(-100vh);opacity:0}}
 
-    .hidden {
-      visibility: hidden;
-    }
+    /* Sections */
+    .section { display:none; position:relative; z-index:1; }
+    .active  { display:block; }
+    h1,h2{ color:#e26ba9; position:relative; z-index:1; }
+    button{ background:#e26ba9; color:#fff; border:none; padding:12px 25px; font-size:16px; cursor:pointer; border-radius:10px; margin-top:20px; opacity:0; animation:fadeIn 1s ease-in .2s forwards; transition:background .3s; position:relative; z-index:1; }
+    button:hover{background:#c3588f}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .typewriter{ font-size:18px; line-height:1.5; white-space:pre-wrap; min-height:100px; }
 
-    #message {
-      margin-top: 15px;
-      font-size: 1.5rem;
-      color: #d6336c;
-      display: none;
-      animation: fadeIn 1.2s ease forwards;
-    }
+    /* Gallery & Flip‑card */
+    .gallery{ display:flex; flex-wrap:wrap; justify-content:center; gap:20px; max-width:900px; margin:0 auto; }
+    .flip-card{ background:transparent; width:180px; height:240px; perspective:1000px; cursor:pointer; }
+    .flip-card-inner{ position:relative; width:100%; height:100%; text-align:center; transition:transform .8s; transform-style:preserve-3d; }
+    .flip-card.flipped .flip-card-inner{ transform:rotateY(180deg); }
+    .flip-card-front,.flip-card-back{ position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:15px; overflow:hidden; box-shadow:0 6px 15px rgba(0,0,0,.1); }
+    .flip-card-front img{ width:100%; height:100%; object-fit:cover; border-radius:15px; }
+    .flip-card-back{ background:#fce4f3; color:#e26ba9; transform:rotateY(180deg); display:flex; align-items:center; justify-content:center; font-weight:600; padding:20px; font-size:16px; }
+    @media(max-width:500px){ .flip-card{ width:90vw; height:120vw; } }
 
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
 
-    button {
-      background: #ff99b7;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      color: white;
-      font-weight: bold;
-      margin-top: 15px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: background 0.3s ease;
-    }
+    /* --------------- QUIZ STYLES --------------- */
+    #quizForm{ max-width:600px; margin:0 auto; text-align:left; }
+    #quizForm fieldset{ border:none; margin:1.3rem 0; padding:0; display:none; }
+    #quizForm fieldset.visible{ display:block; animation:pop .5s ease-out both; }
+    #quizForm legend{ font-weight:600; margin-bottom:.65rem; }
+    #quizForm label{ display:block; margin:.45rem 0; line-height:1.4; cursor:pointer; }
+    #quizForm input[type="text"]{ width:100%; padding:.5rem .7rem; border:2px solid #e26ba9; border-radius:.6rem; font-size:1rem; box-sizing:border-box; }
+    #quizForm button[type="submit"]{ display:block; margin:2rem auto 0; }
+    #results{ list-style:none; padding:0; }
+    #results li{ background:#ffd1dc; padding:1rem; border-radius:.8rem; margin:1rem 0; }
+    @keyframes pop{ 0%{opacity:0; transform:scale(.92);} 100%{opacity:1; transform:scale(1);} }
 
-    button:hover {
-      background: #ff6b9c;
-    }
-
+    /* --------------- CALENDAR STYLES --------------- */
+    .calendar-container { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 15px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .calendar-nav { background: #e26ba9; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    .calendar-nav:hover { background: #c3588f; }
+    .calendar-title { font-size: 24px; font-weight: bold; color: #e26ba9; margin: 0 15px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+    .calendar-day-header { background: #e26ba9; color: white; padding: 15px 5px; text-align: center; font-weight: bold; font-size: 14px; }
+    .calendar-day { background: white; min-height: 100px; padding: 8px; border: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; position: relative; }
+    .calendar-day:hover { background: #ffd1dc; }
+    .calendar-day.other-month { background: #f8f8f8; color: #ccc; }
+    .calendar-day.today { background: #fff0f5; border: 2px solid #e26ba9; }
+    .calendar-day.selected { background: #e26ba9; color: white; }
+    .day-number { font-weight: bold; margin-bottom: 5px; }
+    .event-item { background: #ffd1dc; color: #e26ba9; padding: 2px 6px; margin: 2px 0; border-radius: 4px; font-size: 11px; border-left: 3px solid #e26ba9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event-form { background: #fff0f5; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    .event-form input, .event-form textarea { width: 100%; padding: 10px; margin: 5px 0; border: 2px solid #e26ba9; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
+    .event-form button { background: #e26ba9; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    .event-form button:hover { background: #c3588f; }
+    .event-form button.cancel { background: #ccc; }
+    .event-form button.cancel:hover { background: #aaa; }
+    .events-list { margin-top: 20px; }
+    .event-detail { background: #ffd1dc; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #e26ba9; }
+    .event-detail h4 { margin: 0 0 10px 0; color: #e26ba9; }
+    .event-detail p { margin: 5px 0; color: #666; }
+    .delete-event { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; float: right; }
+    .delete-event:hover { background: #c82333; }
     @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      #message {
-        font-size: 1.2rem;
-      }
+      .calendar-day { min-height: 80px; font-size: 12px; }
+      .calendar-title { font-size: 18px; }
     }
   </style>
 </head>
 <body>
 
-  <h1>💘 Our Love Puzzle 💘</h1>
-  <div id="puzzle-container"></div>
-  <div id="message">You complete me ❤️</div>
-  <button onclick="initPuzzle()">Restart</button>
+<!-- Floating hearts container -->
+<div class="hearts-background" aria-hidden="true"></div>
 
-  <audio id="winSound" src="https://cdn.pixabay.com/download/audio/2023/03/02/audio_b7e1c43847.mp3?filename=small-success-win-celebration-89693.mp3"></audio>
+<!-- Intro steps -->
+<div id="step1" class="section active">
+  <div class="typewriter" id="text1"></div>
+  <button onclick="nextStep('step2')">Next 🎁</button>
+</div>
+<div id="step2" class="section">
+  <div class="typewriter" id="text2"></div>
+  <button onclick="nextStep('step3')">Next 🍰</button>
+</div>
+<div id="step3" class="section">
+  <div class="typewriter" id="text3"></div>
+  <button onclick="nextStep('step4')">Next ✂️</button>
+</div>
+<div id="step4" class="section">
+  <div class="typewriter" id="text4"></div>
+  <button onclick="nextStep('menu')">Enter Website 💕</button>
+</div>
 
-  <script>
-    const gridSize = 3; // change to 4 for 4x4
-    let tiles = [];
-    let emptyIndex = gridSize * gridSize - 1;
+<!-- Main menu -->
+<div id="menu" class="section">
+  <h2>Welcome to Our Little World 💞</h2>
+  <div class="cake-container">
+    <img src="happy_birthday.gif" alt="Cake with candles" style="width:160px;height:auto;filter:drop-shadow(0 0 5px #e26ba9)" />
+  </div>
+  <p>Pick a door to open...</p>
+  <button onclick="showSection('memories')">📸 Our Memories</button>
+  <button onclick="showSection('games')">🎮 Our Games</button>
+  <button onclick="showSection('quiz')">❓ Couple Quiz</button>
+  <button onclick="showSection('calendar')">📅 Our Calendar</button>
+  <div class="cake-text" style="font-size:22px;color:#e26ba9;font-weight:bold;margin-top:15px;text-shadow:1px 1px 2px #ffc0dc;">Happy Birthday Baby 🎂</div>
+</div>
 
-    function shuffle(array) {
-      for (let i = array.length - 2; i > 0; i--) {
-        const j = Math.floor(Math.random() * i);
-        [array[i], array[j]] = [array[j], array[i]];
+<!-- 📸 Memories Section (unchanged) -->
+<div id="memories" class="section">
+  <h2>You've always been with me 💖</h2>
+  <div class="gallery">
+    <!-- eight flip‑cards exactly as provided -->
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo1.jpeg" alt="Second Date" /></div><div class="flip-card-back"><p>Our second date</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo2.jpeg" alt="First Kiss in Bizerte" /></div><div class="flip-card-back"><p>Our first kiss in Bizerte</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo3.jpeg" alt="Said I love you" /></div><div class="flip-card-back"><p>When we both said "I love you"</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo4.jpeg" alt="First Sleepover" /></div><div class="flip-card-back"><p>Our first sleepover</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo5.jpeg" alt="First Intimate Moment" /></div><div class="flip-card-back"><p>Our first intimate moment</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo6.jpeg" alt="My Birthday" /></div><div class="flip-card-back"><p>My birthday</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo7.jpeg" alt="My Graduation" /></div><div class="flip-card-back"><p>My graduation day</p></div></div></div>
+    <div class="flip-card"><div class="flip-card-inner"><div class="flip-card-front"><img src="photo8.jpeg" alt="His Graduation" /></div><div class="flip-card-back"><p>Your graduation day</p></div></div></div>
+  </div>
+  <br /><button onclick="showSection('menu')">← Back</button>
+</div>
+
+<!-- 🎮 Games Section (unchanged) -->
+<div id="games" class="section">
+  <h2>Our Favorite Games 🎮</h2>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:25px;max-width:900px;margin:0 auto;">
+    <div style="width:150px;text-align:center"><img src="it_takes_two.jpeg" alt="It Takes Two" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>It Takes Two</p></div>
+    <div style="width:150px;text-align:center"><img src="the_past_within.jpeg" alt="The Past Within" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>The Past Within</p></div>
+    <div style="width:150px;text-align:center"><img src="we_were_here_expedition.jpeg" alt="We Were Here Expedition" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>We Were Here Expedition</p></div>
+    <div style="width:150px;text-align:center"><img src="we_were_here.jpeg" alt="We Were Here" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>We Were Here</p></div>
+    <div style="width:150px;text-align:center"><img src="united_heist.jpeg" alt="United Heist" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>United Heist</p></div>
+    <div style="width:150px;text-align:center"><img src="in_sink.jpeg" alt="In Sink" style="width:150px;height:150px;border-radius:15px;object-fit:cover;box-shadow:0 4px 8px rgba(0,0,0,0.2)"><p>In Sink</p></div>
+  </div>
+  <br /><button onclick="showSection('menu')">← Back</button>
+</div>
+<!-- ❓ Couple Quiz Section -->
+<div id="quiz" class="section">
+  <h2>How well do we know each other? 💑</h2>
+  <form id="quizForm">
+    <!-- Questions injected by JS -->
+    <button type="submit">Submit Answers</button>
+  </form>
+  <section id="summary" style="display:none;">
+    <h3>Your Answers</h3>
+    <ul id="results"></ul>
+  </section>
+  <br />
+  <button onclick="showSection('menu')">← Back</button>
+</div>
+
+<!-- 📅 Calendar Section -->
+<div id="calendar" class="section">
+  <h2>Our Shared Calendar 📅</h2>
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <button class="calendar-nav" onclick="changeMonth(-1)">← Previous</button>
+      <h3 class="calendar-title" id="calendar-title">January 2025</h3>
+      <button class="calendar-nav" onclick="changeMonth(1)">Next →</button>
+    </div>
+    <div class="calendar-grid" id="calendar-grid">
+      <!-- Calendar days will be populated by JavaScript -->
+    </div>
+    
+    <!-- Add Event Form -->
+    <div id="event-form" class="event-form" style="display: none;">
+      <h3>Add New Event</h3>
+      <input type="text" id="event-title" placeholder="Event Title" required>
+      <input type="datetime-local" id="event-datetime" required>
+      <textarea id="event-description" placeholder="Description (optional)" rows="3"></textarea>
+      <input type="text" id="event-location" placeholder="Location (optional)">
+      <div style="margin-top: 15px;">
+        <button onclick="saveEvent()">Save Event</button>
+        <button class="cancel" onclick="cancelEvent()" style="margin-left: 10px;">Cancel</button>
+      </div>
+    </div>
+    
+    <!-- Today's Events -->
+    <div class="events-list" id="today-events">
+      <h3>Today's Events</h3>
+      <div id="today-events-list"></div>
+    </div>
+  </div>
+  <br />
+  <button onclick="showSection('menu')">← Back</button>
+</div>
+
+<script>
+  /* ---------- Existing JS (intro, hearts, gallery, navigation) ---------- */
+  function typeText(id, text, speed = 30){ let i=0; const el=document.getElementById(id); el.innerHTML=''; (function type(){ if(i<text.length){ el.innerHTML += text.charAt(i); i++; setTimeout(type,speed);} })(); }
+  const stepTexts={text1:"You already saw your first gift.", text2:"Now it's time for your second gift...\nA tiramisu 🍰 made with love, just for you.", text3:"And the third one...\nA handcraft gift ✂️", text4:"And finally...\nThis website 💻 not as perfect as an engineer's work,\nbut made with all the love in the world 💗"};
+  function nextStep(stepId){ document.querySelectorAll('.section').forEach(sec=>sec.classList.remove('active')); document.getElementById(stepId).classList.add('active'); if(stepId.startsWith('step')){ typeText('text'+stepId.slice(-1), stepTexts['text'+stepId.slice(-1)]);} if(stepId!=='step1'){ localStorage.setItem('giftSeen','yes');}}
+  function showSection(id){ document.querySelectorAll('.section').forEach(sec=>sec.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+  document.addEventListener('DOMContentLoaded', () => {
+    // Flip‑cards
+    document.querySelectorAll('.flip-card').forEach(card=>card.addEventListener('click',()=>card.classList.toggle('flipped')));
+    // Hearts
+    const heartsContainer=document.querySelector('.hearts-background'); const colors=['pink','purple','lightpink','lavender']; const numHearts=30; const svgHeart=`<svg viewBox="0 0 32 29.6" xmlns="http://www.w3.org/2000/svg"><path d="M23.6,0c-3.4,0-6.4,2.6-7.6,5.7C14.8,2.6,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,7.9,16,21.2,16,21.2s16-13.3,16-21.2C32,3.8,28.2,0,23.6,0z"/></svg>`; for(let i=0;i<numHearts;i++){ const d=document.createElement('div'); d.classList.add('heart', colors[Math.floor(Math.random()*colors.length)]); d.style.left=Math.random()*100+'vw'; const size=15+Math.random()*15; d.style.width=size+'px'; d.style.height=size+'px'; const dur=10+Math.random()*15; d.style.animationDuration=dur+'s'; d.style.animationDelay=(Math.random()*dur)+'s'; d.innerHTML=svgHeart; heartsContainer.appendChild(d);}    
+    // Gift already seen?
+    if(localStorage.getItem('giftSeen')==='yes'){ showSection('menu'); } else { typeText('text1', stepTexts.text1); }
+
+  // Quiz questions and options
+    const quizQuestions = [
+      {
+        question: "What is my favorite color?",
+        answers: ["Red", "Blue", "Green", "Yellow"],
+      },
+      {
+        question: "Where did we first meet?",
+        answers: ["Cafe", "Park", "University", "Library"],
+      },
+      {
+        question: "What's my dream vacation spot?",
+        answers: ["Paris", "Maldives", "Tokyo", "New York"],
+      },
+      {
+        question: "What's my favorite movie genre?",
+        answers: ["Comedy", "Horror", "Drama", "Sci-Fi"],
+      },
+      // Add more questions here as you like
+    ];
+
+// Current question index
+let currentQuestionIndex = 0;
+
+// Store user answers
+const userAnswers = [];
+
+// Reference to quiz form and container
+const quizForm = document.getElementById("quizForm");
+const resultsSection = document.getElementById("summary");
+const resultsList = document.getElementById("results");
+
+// Function to render the current question
+function showQuestion(index) {
+  quizForm.innerHTML = ""; // Clear previous question
+
+  const questionData = quizQuestions[index];
+
+  // Create fieldset
+  const fieldset = document.createElement("fieldset");
+  fieldset.classList.add("visible");
+
+  // Question legend
+  const legend = document.createElement("legend");
+  legend.textContent = questionData.question;
+  fieldset.appendChild(legend);
+
+  // Create radio inputs for answers
+  questionData.answers.forEach((answer, i) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "answer";
+    input.value = answer;
+    input.required = true; // force user to pick one option
+
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(answer));
+    fieldset.appendChild(label);
+  });
+
+  // Next or Submit button
+  const btn = document.createElement("button");
+  if (index === quizQuestions.length - 1) {
+    btn.type = "submit";
+    btn.textContent = "Submit Answers";
+  } else {
+    btn.type = "button";
+    btn.textContent = "Next";
+    btn.addEventListener("click", () => {
+      const selected = quizForm.querySelector('input[name="answer"]:checked');
+      if (!selected) {
+        alert("Please select an answer to continue.");
+        return;
       }
-      return array;
-    }
+      userAnswers[index] = selected.value;
+      currentQuestionIndex++;
+      showQuestion(currentQuestionIndex);
+    });
+  }
+  fieldset.appendChild(btn);
+  quizForm.appendChild(fieldset);
+}
 
-    function isSolvable(arr) {
-      let inversions = 0;
-      for (let i = 0; i < arr.length; i++) {
-        for (let j = i + 1; j < arr.length; j++) {
-          if (arr[i] && arr[j] && arr[i] > arr[j]) inversions++;
+// Handle form submit
+quizForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const selected = quizForm.querySelector('input[name="answer"]:checked');
+  if (!selected) {
+    alert("Please select an answer before submitting.");
+    return;
+  }
+  userAnswers[currentQuestionIndex] = selected.value;
+  quizForm.style.display = "none";
+  displayResults();
+});
+
+// Display user answers
+function displayResults() {
+  resultsList.innerHTML = "";
+  quizQuestions.forEach((q, i) => {
+    const li = document.createElement("li");
+    li.textContent = `${q.question} — Your answer: ${userAnswers[i] || "No answer"}`;
+    resultsList.appendChild(li);
+  });
+  resultsSection.style.display = "block";
+}
+
+// Initialize quiz on page load or when quiz section is shown
+function startQuiz() {
+  currentQuestionIndex = 0;
+  userAnswers.length = 0;
+  resultsSection.style.display = "none";
+  quizForm.style.display = "block";
+  showQuestion(currentQuestionIndex);
+}
+
+// Add event listener to quiz menu button to start quiz fresh
+document.querySelector("button[onclick=\"showSection('quiz')\"]").addEventListener("click", () => {
+  startQuiz();
+});
+
+    function showNext(idx){ if(idx < quizQuestions.length-1){ const nextFs=quizForm.querySelectorAll('fieldset')[idx+1]; nextFs.classList.add('visible'); } }
+
+    quizForm.addEventListener('submit',e=>{
+      e.preventDefault(); const results=[];
+      quizQuestions.forEach((q,idx)=>{
+        const radios=[...quizForm.querySelectorAll(`input[name='q${idx}']`)]; let ans=''; radios.forEach(r=>{ if(r.checked) ans=r.value; });
+        if(!ans){ const ci=quizForm.querySelector(`input[name='q${idx}_custom']`); ans=ci.value.trim()||'(no answer)'; }
+        results.push({question:q.text, answer:ans});
+      });
+      const list=document.getElementById('results'); list.innerHTML='';
+      results.forEach((r,i)=>{ const li=document.createElement('li'); li.innerHTML=`<strong>${i+1}. ${r.question}</strong><br>${r.answer}`; list.appendChild(li); });
+      document.getElementById('summary').style.display='block'; document.getElementById('summary').scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  /* ---------- CALENDAR FUNCTIONALITY ---------- */
+  // Calendar state
+  let currentDate = new Date();
+  let selectedDate = null;
+  let events = [];
+  
+  // Calendar configuration
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  // Simple cloud storage simulation (replace with your preferred service)
+  const STORAGE_API_URL = 'https://api.jsonbin.io/v3/b/YOUR_BIN_ID'; // Replace with your JSONBin.io bin ID
+  const STORAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your JSONBin.io API key
+  
+  // Initialize calendar
+  function initCalendar() {
+    loadEvents();
+    renderCalendar();
+    updateTodayEvents();
+  }
+  
+  // Load events from cloud storage
+  async function loadEvents() {
+    try {
+      // For demo purposes, we'll use a simple array in memory
+      // In a real implementation, you'd fetch from your cloud storage
+      events = [
+        {
+          id: 1,
+          title: "Anniversary Dinner",
+          date: "2025-02-14",
+          time: "19:00",
+          description: "Our special dinner at the romantic restaurant",
+          location: "Le Romantique Restaurant"
+        },
+        {
+          id: 2,
+          title: "Movie Night",
+          date: "2025-01-20",
+          time: "20:00",
+          description: "Watching our favorite romantic movie together",
+          location: "Home"
         }
+      ];
+      
+      // Uncomment below for real cloud storage integration
+      /*
+      const response = await fetch(STORAGE_API_URL, {
+        headers: {
+          'X-Master-Key': STORAGE_API_KEY
+        }
+      });
+      const data = await response.json();
+      events = data.record.events || [];
+      */
+    } catch (error) {
+      console.log('Loading demo events');
+      events = [];
+    }
+  }
+  
+  // Save events to cloud storage
+  async function saveEventsToCloud() {
+    try {
+      // Uncomment below for real cloud storage integration
+      /*
+      await fetch(STORAGE_API_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': STORAGE_API_KEY
+        },
+        body: JSON.stringify({ events: events })
+      });
+      */
+      console.log('Events saved to cloud');
+    } catch (error) {
+      console.log('Error saving events:', error);
+    }
+  }
+  
+  // Render calendar
+  function renderCalendar() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    const calendarTitle = document.getElementById('calendar-title');
+    
+    // Update title
+    calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    
+    // Clear previous calendar
+    calendarGrid.innerHTML = '';
+    
+    // Add day headers
+    dayNames.forEach(day => {
+      const dayHeader = document.createElement('div');
+      dayHeader.className = 'calendar-day-header';
+      dayHeader.textContent = day;
+      calendarGrid.appendChild(dayHeader);
+    });
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+// Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      const emptyDay = document.createElement('div');
+      emptyDay.className = 'calendar-day other-month';
+      calendarGrid.appendChild(emptyDay);
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      
+      // Check if it's today
+      const today = new Date();
+      if (currentDate.getFullYear() === today.getFullYear() &&
+          currentDate.getMonth() === today.getMonth() &&
+          day === today.getDate()) {
+        dayElement.classList.add('today');
       }
-      return inversions % 2 === 0;
+      
+      // Check if it's selected
+      if (selectedDate &&
+          selectedDate.getFullYear() === currentDate.getFullYear() &&
+          selectedDate.getMonth() === currentDate.getMonth() &&
+          selectedDate.getDate() === day) {
+        dayElement.classList.add('selected');
+      }
+      
+      // Add day number
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'day-number';
+      dayNumber.textContent = day;
+      dayElement.appendChild(dayNumber);
+      
+      // Add events for this day
+      const dayEvents = getEventsForDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+      dayEvents.forEach(event => {
+        const eventElement = document.createElement('div');
+        eventElement.className = 'event-item';
+        eventElement.textContent = event.title;
+        eventElement.title = `${event.time} - ${event.title}`;
+        dayElement.appendChild(eventElement);
+      });
+      
+      // Add click event to select date
+      dayElement.addEventListener('click', () => {
+        selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        renderCalendar();
+        showEventForm();
+      });
+      
+      calendarGrid.appendChild(dayElement);
     }
-
-    function createPuzzle() {
-      const container = document.getElementById('puzzle-container');
-      container.innerHTML = '';
-      let numbers = [...Array(gridSize * gridSize).keys()];
-      do {
-        shuffle(numbers);
-      } while (!isSolvable(numbers));
-
-      tiles = numbers;
-
-      numbers.forEach((num, index) => {
-        const tile = document.createElement('div');
-        tile.className = 'tile';
-        if (num === 0) {
-          tile.classList.add('hidden');
-        } else {
-          const x = (num - 1) % gridSize;
-          const y = Math.floor((num - 1) / gridSize);
-          tile.style.backgroundPosition = `${(x * 100) / (gridSize - 1)}% ${(y * 100) / (gridSize - 1)}%`;
-        }
-
-        tile.addEventListener('click', () => moveTile(index));
-        container.appendChild(tile);
+    
+    // Add empty cells for days after month ends
+    const totalCells = calendarGrid.children.length - 7; // Subtract header cells
+    const remainingCells = 35 - totalCells; // 5 rows * 7 days = 35 cells
+    for (let i = 0; i < remainingCells; i++) {
+      const emptyDay = document.createElement('div');
+      emptyDay.className = 'calendar-day other-month';
+      calendarGrid.appendChild(emptyDay);
+    }
+  }
+  
+  // Get events for a specific date
+  function getEventsForDate(year, month, day) {
+    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return events.filter(event => event.date === dateString);
+  }
+  
+  // Change month
+  function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar();
+    updateTodayEvents();
+  }
+  
+  // Show event form
+  function showEventForm() {
+    const eventForm = document.getElementById('event-form');
+    const eventDateTime = document.getElementById('event-datetime');
+    
+    if (selectedDate) {
+      // Set default date to selected date
+      const dateString = selectedDate.toISOString().slice(0, 16);
+      eventDateTime.value = dateString;
+    }
+    
+    eventForm.style.display = 'block';
+    eventForm.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  // Hide event form
+  function cancelEvent() {
+    document.getElementById('event-form').style.display = 'none';
+    clearEventForm();
+  }
+  
+  // Clear event form
+  function clearEventForm() {
+    document.getElementById('event-title').value = '';
+    document.getElementById('event-datetime').value = '';
+    document.getElementById('event-description').value = '';
+    document.getElementById('event-location').value = '';
+  }
+  
+  // Save event
+  function saveEvent() {
+    const title = document.getElementById('event-title').value.trim();
+    const datetime = document.getElementById('event-datetime').value;
+    const description = document.getElementById('event-description').value.trim();
+    const location = document.getElementById('event-location').value.trim();
+    
+    if (!title || !datetime) {
+      alert('Please fill in the title and date/time fields.');
+      return;
+    }
+    
+    const eventDate = new Date(datetime);
+    const newEvent = {
+      id: Date.now(), // Simple ID generation
+      title: title,
+      date: eventDate.toISOString().slice(0, 10),
+      time: eventDate.toTimeString().slice(0, 5),
+      description: description,
+      location: location
+    };
+    
+    events.push(newEvent);
+    saveEventsToCloud();
+    renderCalendar();
+    updateTodayEvents();
+    cancelEvent();
+    
+    alert('Event saved successfully!');
+  }
+  
+  // Delete event
+  function deleteEvent(eventId) {
+    if (confirm('Are you sure you want to delete this event?')) {
+      events = events.filter(event => event.id !== eventId);
+      saveEventsToCloud();
+      renderCalendar();
+      updateTodayEvents();
+    }
+  }
+  
+  // Update today's events
+  function updateTodayEvents() {
+    const today = new Date();
+    const todayString = today.toISOString().slice(0, 10);
+    const todayEvents = events.filter(event => event.date === todayString);
+    
+    const todayEventsList = document.getElementById('today-events-list');
+    todayEventsList.innerHTML = '';
+    
+    if (todayEvents.length === 0) {
+      todayEventsList.innerHTML = '<p>No events today</p>';
+      return;
+    }
+    
+    todayEvents.forEach(event => {
+      const eventElement = document.createElement('div');
+      eventElement.className = 'event-detail';
+      eventElement.innerHTML = `
+        <h4>${event.title}</h4>
+        <p><strong>Time:</strong> ${event.time}</p>
+        ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
+        ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
+        <button class="delete-event" onclick="deleteEvent(${event.id})">Delete</button>
+      `;
+      todayEventsList.appendChild(eventElement);
+    });
+  }
+  
+  // Initialize calendar when calendar section is shown
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize calendar
+    initCalendar();
+    
+    // Add event listener to calendar menu button
+    const calendarButton = document.querySelector("button[onclick=\"showSection('calendar')\"]");
+    if (calendarButton) {
+      calendarButton.addEventListener('click', () => {
+        setTimeout(() => {
+          initCalendar();
+        }, 100);
       });
     }
-
-    function moveTile(index) {
-      const row = Math.floor(index / gridSize);
-      const col = index % gridSize;
-      const emptyRow = Math.floor(emptyIndex / gridSize);
-      const emptyCol = emptyIndex % gridSize;
-
-      const distance = Math.abs(row - emptyRow) + Math.abs(col - emptyCol);
-      if (distance === 1) {
-        [tiles[index], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[index]];
-        emptyIndex = index;
-        updateTiles();
-        if (checkWin()) showMessage();
-      }
-    }
-
-    function updateTiles() {
-      const container = document.getElementById('puzzle-container');
-      [...container.children].forEach((tile, index) => {
-        const num = tiles[index];
-        if (num === 0) {
-          tile.className = 'tile hidden';
-          tile.style.backgroundImage = '';
-        } else {
-          tile.className = 'tile';
-          const x = (num - 1) % gridSize;
-          const y = Math.floor((num - 1) / gridSize);
-          tile.style.backgroundImage = "url('us_puzzle.jpeg')";
-          tile.style.backgroundPosition = `${(x * 100) / (gridSize - 1)}% ${(y * 100) / (gridSize - 1)}%`;
-        }
-      });
-    }
-
-    function checkWin() {
-      for (let i = 0; i < tiles.length - 1; i++) {
-        if (tiles[i] !== i + 1) return false;
-      }
-      return true;
-    }
-
-    function showMessage() {
-      document.getElementById('message').style.display = 'block';
-      document.getElementById('winSound').play();
-    }
-
-    function initPuzzle() {
-      document.getElementById('message').style.display = 'none';
-      createPuzzle();
-    }
-
-    window.onload = initPuzzle;
-  </script>
+  });
+  
+  // Make functions globally available
+  window.changeMonth = changeMonth;
+  window.saveEvent = saveEvent;
+  window.cancelEvent = cancelEvent;
+  window.deleteEvent = deleteEvent;
+</script>
 </body>
 </html>
