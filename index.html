@@ -357,309 +357,287 @@ document.querySelector("button[onclick=\"showSection('quiz')\"]").addEventListen
     });
   });
 
-  /* ---------- CALENDAR FUNCTIONALITY ---------- */
-  // Calendar state
-  let currentDate = new Date();
-  let selectedDate = null;
-  let events = [];
-  
-  // Calendar configuration
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  
-  // Simple cloud storage simulation (replace with your preferred service)
-  const STORAGE_API_URL = 'https://api.jsonbin.io/v3/b/YOUR_BIN_ID'; // Replace with your JSONBin.io bin ID
-  const STORAGE_API_KEY = 'YOUR_API_KEY'; // Replace with your JSONBin.io API key
-  
-  // Initialize calendar
-  function initCalendar() {
-    loadEvents();
-    renderCalendar();
-    updateTodayEvents();
+/* ---------- CALENDAR FUNCTIONALITY ---------- */
+// Calendar state
+let currentDate = new Date();
+let selectedDate = null;
+let events = [];
+
+// Calendar configuration
+const monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// Initialize calendar
+function initCalendar() {
+  // Make sure currentDate is a valid Date object
+  if (!(currentDate instanceof Date) || isNaN(currentDate)) {
+    currentDate = new Date();
   }
   
-  // Load events from cloud storage
-  async function loadEvents() {
-    try {
-      // For demo purposes, we'll use a simple array in memory
-      // In a real implementation, you'd fetch from your cloud storage
+  loadEvents();
+  renderCalendar();
+  updateTodayEvents();
+}
+
+// Load events from localStorage
+function loadEvents() {
+  try {
+    const savedEvents = localStorage.getItem('coupleCalendarEvents');
+    if (savedEvents) {
+      events = JSON.parse(savedEvents);
+    } else {
+      // Add sample events if this is the first time
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+      
       events = [
         {
           id: 1,
-          title: "Anniversary Dinner",
-          date: "2025-02-14",
+          title: "Date Night",
+          date: today.toISOString().split('T')[0],
           time: "19:00",
-          description: "Our special dinner at the romantic restaurant",
-          location: "Le Romantique Restaurant"
+          description: "Romantic dinner at our favorite place",
+          location: "The Bistro"
         },
         {
           id: 2,
           title: "Movie Night",
-          date: "2025-01-20",
+          date: nextWeek.toISOString().split('T')[0],
           time: "20:00",
-          description: "Watching our favorite romantic movie together",
+          description: "Watch our favorite movie together",
           location: "Home"
         }
       ];
-      
-      // Uncomment below for real cloud storage integration
-      /*
-      const response = await fetch(STORAGE_API_URL, {
-        headers: {
-          'X-Master-Key': STORAGE_API_KEY
-        }
-      });
-      const data = await response.json();
-      events = data.record.events || [];
-      */
-    } catch (error) {
-      console.log('Loading demo events');
-      events = [];
+      saveEvents();
     }
+  } catch (error) {
+    console.error('Error loading events:', error);
+    events = [];
   }
+}
+
+// Save events to localStorage
+function saveEvents() {
+  try {
+    localStorage.setItem('coupleCalendarEvents', JSON.stringify(events));
+    return true;
+  } catch (error) {
+    console.error('Error saving events:', error);
+    return false;
+  }
+}
+
+// Get events for a specific date
+function getEventsForDate(year, month, day) {
+  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return events.filter(event => event.date === dateStr);
+}
+
+// Render the calendar grid
+function renderCalendar() {
+  const calendarGrid = document.getElementById('calendar-grid');
+  const calendarTitle = document.getElementById('calendar-title');
   
-  // Save events to cloud storage
-  async function saveEventsToCloud() {
-    try {
-      // Uncomment below for real cloud storage integration
-      /*
-      await fetch(STORAGE_API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': STORAGE_API_KEY
-        },
-        body: JSON.stringify({ events: events })
-      });
-      */
-      console.log('Events saved to cloud');
-    } catch (error) {
-      console.log('Error saving events:', error);
+  if (!calendarGrid || !calendarTitle) {
+    console.error('Calendar elements not found');
+    return;
+  }
+
+  // Clear previous calendar
+  calendarGrid.innerHTML = '';
+  
+  // Add day headers
+  dayNames.forEach(day => {
+    const dayHeader = document.createElement('div');
+    dayHeader.className = 'calendar-day-header';
+    dayHeader.textContent = day;
+    calendarGrid.appendChild(dayHeader);
+  });
+
+  // Get first day of month and number of days
+  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay();
+
+  // Update title
+  calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // Add empty cells for days before month starts
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    const emptyDay = document.createElement('div');
+    emptyDay.className = 'calendar-day other-month';
+    calendarGrid.appendChild(emptyDay);
+  }
+
+  // Add days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    
+    // Check if it's today
+    const today = new Date();
+    if (currentDate.getFullYear() === today.getFullYear() &&
+        currentDate.getMonth() === today.getMonth() &&
+        day === today.getDate()) {
+      dayElement.classList.add('today');
     }
-  }
-  
-  // Render calendar
-  function renderCalendar() {
-    const calendarGrid = document.getElementById('calendar-grid');
-    const calendarTitle = document.getElementById('calendar-title');
     
-    // Update title
-    calendarTitle.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    // Check if it's selected
+    if (selectedDate &&
+        selectedDate.getFullYear() === currentDate.getFullYear() &&
+        selectedDate.getMonth() === currentDate.getMonth() &&
+        selectedDate.getDate() === day) {
+      dayElement.classList.add('selected');
+    }
     
-    // Clear previous calendar
-    calendarGrid.innerHTML = '';
+    // Add day number
+    const dayNumber = document.createElement('div');
+    dayNumber.className = 'day-number';
+    dayNumber.textContent = day;
+    dayElement.appendChild(dayNumber);
     
-    // Add day headers
-    dayNames.forEach(day => {
-      const dayHeader = document.createElement('div');
-      dayHeader.className = 'calendar-day-header';
-      dayHeader.textContent = day;
-      calendarGrid.appendChild(dayHeader);
+    // Add events for this day
+    const dayEvents = getEventsForDate(currentDate.getFullYear(), currentDate.getMonth(), day);
+    dayEvents.forEach(event => {
+      const eventElement = document.createElement('div');
+      eventElement.className = 'event-item';
+      eventElement.textContent = event.title;
+      eventElement.title = `${event.time} - ${event.title}`;
+      dayElement.appendChild(eventElement);
     });
     
-    // Get first day of month and number of days
-    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    // Add click event to select date
+    dayElement.addEventListener('click', () => {
+      selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      renderCalendar();
+      showEventForm();
+    });
     
-// Add empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      const emptyDay = document.createElement('div');
-      emptyDay.className = 'calendar-day other-month';
-      calendarGrid.appendChild(emptyDay);
-    }
-    
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      
-      // Check if it's today
-      const today = new Date();
-      if (currentDate.getFullYear() === today.getFullYear() &&
-          currentDate.getMonth() === today.getMonth() &&
-          day === today.getDate()) {
-        dayElement.classList.add('today');
-      }
-      
-      // Check if it's selected
-      if (selectedDate &&
-          selectedDate.getFullYear() === currentDate.getFullYear() &&
-          selectedDate.getMonth() === currentDate.getMonth() &&
-          selectedDate.getDate() === day) {
-        dayElement.classList.add('selected');
-      }
-      
-      // Add day number
-      const dayNumber = document.createElement('div');
-      dayNumber.className = 'day-number';
-      dayNumber.textContent = day;
-      dayElement.appendChild(dayNumber);
-      
-      // Add events for this day
-      const dayEvents = getEventsForDate(currentDate.getFullYear(), currentDate.getMonth(), day);
-      dayEvents.forEach(event => {
-        const eventElement = document.createElement('div');
-        eventElement.className = 'event-item';
-        eventElement.textContent = event.title;
-        eventElement.title = `${event.time} - ${event.title}`;
-        dayElement.appendChild(eventElement);
-      });
-      
-      // Add click event to select date
-      dayElement.addEventListener('click', () => {
-        selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-        renderCalendar();
-        showEventForm();
-      });
-      
-      calendarGrid.appendChild(dayElement);
-    }
-    
-    // Add empty cells for days after month ends
-    const totalCells = calendarGrid.children.length - 7; // Subtract header cells
-    const remainingCells = 35 - totalCells; // 5 rows * 7 days = 35 cells
-    for (let i = 0; i < remainingCells; i++) {
-      const emptyDay = document.createElement('div');
-      emptyDay.className = 'calendar-day other-month';
-      calendarGrid.appendChild(emptyDay);
-    }
+    calendarGrid.appendChild(dayElement);
   }
   
-  // Get events for a specific date
-  function getEventsForDate(year, month, day) {
-    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.filter(event => event.date === dateString);
+  // Add empty cells for days after month ends
+  const totalCells = calendarGrid.children.length - 7; // Subtract header cells
+  const remainingCells = 35 - totalCells; // 5 rows * 7 days = 35 cells
+  for (let i = 0; i < remainingCells; i++) {
+    const emptyDay = document.createElement('div');
+    emptyDay.className = 'calendar-day other-month';
+    calendarGrid.appendChild(emptyDay);
+  }
+}
+
+// Update today's events
+function updateTodayEvents() {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const todayEvents = events.filter(event => event.date === todayStr);
+  
+  const todayEventsList = document.getElementById('today-events-list');
+  todayEventsList.innerHTML = '';
+  
+  if (todayEvents.length === 0) {
+    todayEventsList.innerHTML = '<p>No events scheduled for today</p>';
+    return;
   }
   
-  // Change month
-  function changeMonth(delta) {
-    currentDate.setMonth(currentDate.getMonth() + delta);
-    renderCalendar();
-    updateTodayEvents();
+  todayEvents.forEach(event => {
+    const eventElement = document.createElement('div');
+    eventElement.className = 'event-detail';
+    eventElement.innerHTML = `
+      <h4>${event.title}</h4>
+      <p><strong>Time:</strong> ${event.time}</p>
+      ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
+      ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
+      <button class="delete-event" onclick="deleteEvent(${event.id})">Delete</button>
+    `;
+    todayEventsList.appendChild(eventElement);
+  });
+}
+
+// Show event form
+function showEventForm() {
+  const eventForm = document.getElementById('event-form');
+  const eventDateTime = document.getElementById('event-datetime');
+  
+  if (selectedDate) {
+    // Set default date to selected date
+    const dateStr = selectedDate.toISOString().slice(0, 16);
+    eventDateTime.value = dateStr;
   }
   
-  // Show event form
-  function showEventForm() {
-    const eventForm = document.getElementById('event-form');
-    const eventDateTime = document.getElementById('event-datetime');
-    
-    if (selectedDate) {
-      // Set default date to selected date
-      const dateString = selectedDate.toISOString().slice(0, 16);
-      eventDateTime.value = dateString;
-    }
-    
-    eventForm.style.display = 'block';
-    eventForm.scrollIntoView({ behavior: 'smooth' });
-  }
-  
-  // Hide event form
-  function cancelEvent() {
-    document.getElementById('event-form').style.display = 'none';
-    clearEventForm();
-  }
-  
-  // Clear event form
-  function clearEventForm() {
-    document.getElementById('event-title').value = '';
-    document.getElementById('event-datetime').value = '';
-    document.getElementById('event-description').value = '';
-    document.getElementById('event-location').value = '';
-  }
-  
-  // Save event
-  function saveEvent() {
-    const title = document.getElementById('event-title').value.trim();
-    const datetime = document.getElementById('event-datetime').value;
-    const description = document.getElementById('event-description').value.trim();
-    const location = document.getElementById('event-location').value.trim();
-    
-    if (!title || !datetime) {
-      alert('Please fill in the title and date/time fields.');
-      return;
-    }
-    
-    const eventDate = new Date(datetime);
-    const newEvent = {
-      id: Date.now(), // Simple ID generation
-      title: title,
-      date: eventDate.toISOString().slice(0, 10),
-      time: eventDate.toTimeString().slice(0, 5),
-      description: description,
-      location: location
-    };
-    
-    events.push(newEvent);
-    saveEventsToCloud();
-    renderCalendar();
-    updateTodayEvents();
-    cancelEvent();
-    
-    alert('Event saved successfully!');
-  }
-  
-  // Delete event
-  function deleteEvent(eventId) {
-    if (confirm('Are you sure you want to delete this event?')) {
-      events = events.filter(event => event.id !== eventId);
-      saveEventsToCloud();
+  eventForm.style.display = 'block';
+}
+
+// Hide event form
+function cancelEvent() {
+  document.getElementById('event-form').style.display = 'none';
+  document.getElementById('event-title').value = '';
+  document.getElementById('event-datetime').value = '';
+  document.getElementById('event-description').value = '';
+  document.getElementById('event-location').value = '';
+}
+
+// Delete event
+function deleteEvent(eventId) {
+  if (confirm('Are you sure you want to delete this event?')) {
+    events = events.filter(event => event.id !== eventId);
+    if (saveEvents()) {
       renderCalendar();
       updateTodayEvents();
     }
   }
+}
+
+// Initialize calendar when page loads
+document.addEventListener('DOMContentLoaded', initCalendar);
+
+// Make functions available globally
+window.changeMonth = function(delta) {
+  currentDate.setMonth(currentDate.getMonth() + delta);
+  renderCalendar();
+  updateTodayEvents();
+};
+
+window.saveEvent = function() {
+  const title = document.getElementById('event-title').value.trim();
+  const datetime = document.getElementById('event-datetime').value;
   
-  // Update today's events
-  function updateTodayEvents() {
-    const today = new Date();
-    const todayString = today.toISOString().slice(0, 10);
-    const todayEvents = events.filter(event => event.date === todayString);
-    
-    const todayEventsList = document.getElementById('today-events-list');
-    todayEventsList.innerHTML = '';
-    
-    if (todayEvents.length === 0) {
-      todayEventsList.innerHTML = '<p>No events today</p>';
-      return;
-    }
-    
-    todayEvents.forEach(event => {
-      const eventElement = document.createElement('div');
-      eventElement.className = 'event-detail';
-      eventElement.innerHTML = `
-        <h4>${event.title}</h4>
-        <p><strong>Time:</strong> ${event.time}</p>
-        ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
-        ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
-        <button class="delete-event" onclick="deleteEvent(${event.id})">Delete</button>
-      `;
-      todayEventsList.appendChild(eventElement);
-    });
+  if (!title || !datetime) {
+    alert('Please fill in the title and date/time fields.');
+    return;
   }
   
-  // Initialize calendar when calendar section is shown
-  document.addEventListener('DOMContentLoaded', () => {
-    // Initialize calendar
-    initCalendar();
-    
-    // Add event listener to calendar menu button
-    const calendarButton = document.querySelector("button[onclick=\"showSection('calendar')\"]");
-    if (calendarButton) {
-      calendarButton.addEventListener('click', () => {
-        setTimeout(() => {
-          initCalendar();
-        }, 100);
-      });
-    }
-  });
+  const eventDate = new Date(datetime);
+  const newEvent = {
+    id: Date.now(),
+    title: title,
+    date: eventDate.toISOString().split('T')[0],
+    time: eventDate.toTimeString().slice(0, 5),
+    description: document.getElementById('event-description').value.trim(),
+    location: document.getElementById('event-location').value.trim()
+  };
   
-  // Make functions globally available
-  window.changeMonth = changeMonth;
-  window.saveEvent = saveEvent;
-  window.cancelEvent = cancelEvent;
-  window.deleteEvent = deleteEvent;
+  events.push(newEvent);
+  if (saveEvents()) {
+    renderCalendar();
+    updateTodayEvents();
+    cancelEvent();
+  } else {
+    alert('Failed to save event. Please try again.');
+  }
+};
+
+window.cancelEvent = cancelEvent;
+window.deleteEvent = deleteEvent;
+
+// Initialize calendar when calendar section is shown
+document.querySelector("button[onclick=\"showSection('calendar')\"]")
+  .addEventListener('click', initCalendar);
+
+// [Keep all other existing window.function declarations...]
 </script>
 </body>
 </html>
